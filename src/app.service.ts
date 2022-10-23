@@ -19,11 +19,17 @@ interface ICursorRequest {
   total?: number;
 }
 
-interface ITodo {
+export interface ITodo {
   id: string;
   name: string;
   description: string;
   completed: boolean;
+}
+
+export interface ITodoCollection {
+  items: Array<ITodo>;
+  total: number;
+  count: number;
 }
 
 const defaultCursorRequest = {
@@ -31,14 +37,16 @@ const defaultCursorRequest = {
   start: 0,
 };
 
-const deserializeCursor = (parameters: string): ICursor => {
+export const deserializeCursor = (parameters: string): ICursor => {
   const payload: string = Buffer.from(parameters, 'base64').toString('utf8');
   return JSON.parse(payload);
 };
 
 const serializeCursor = (cursor: ICursor) => new Buffer(JSON.stringify(cursor), 'utf8').toString('base64');
 
-const generateCursor = (resourceUri: string, request: ICursorRequest = defaultCursorRequest): string => {
+// TODO: memoize this
+export const generateCursor = (resourceUri: string, request: ICursorRequest = defaultCursorRequest): string => {
+  console.log(`\nCreating Cursor... Resource=${resourceUri}\n`)
   const { start, count, total } = request;
 
   const isNext = total - (start + count);
@@ -47,8 +55,18 @@ const generateCursor = (resourceUri: string, request: ICursorRequest = defaultCu
   const nextPage = isNext ? start + count : null;
   const previousPage = isPrevious ? start - count : null;
 
-  const next = nextPage ? `${resourceUri}?cursor=${}` : null;
-  const previous = previousPage ? `${resourceUri}?cursor=${}` : null;
+  const next = nextPage ? `${resourceUri}?cursor=${generateCursor(
+    resourceUri, {
+      ...defaultCursorRequest,
+      start: nextPage,
+    }
+  )}` : null;
+  const previous = previousPage ? `${resourceUri}?cursor=${generateCursor(
+    resourceUri, {
+      ...defaultCursorRequest,
+      start: previousPage,
+    }
+  )}` : null;
 
   const cursor: ICursor = {
     start,
@@ -64,10 +82,19 @@ const generateCursor = (resourceUri: string, request: ICursorRequest = defaultCu
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  getTodo(id: string): ITodo {
+    return Data.find(({ id: identifier }) => identifier === id)
   }
-  getTodos(cursor): Array<ITodo> {
-    return Data;
+  getTodoCollection(cursorStr: string): ITodoCollection {
+    const cursor: ICursor = deserializeCursor(cursorStr);
+    const { start, count } = cursor;
+    const items = Data.slice(start, count);
+    const total = Data.length;
+    const collection: ITodoCollection = {
+      items,
+      total,
+      count,
+    }
+    return collection;
   }
 }
