@@ -1,4 +1,4 @@
-Cursor based pagination example using Nest.
+ts-nest-cursor-pagination-example
 =======
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
@@ -26,49 +26,32 @@ Cursor based pagination example using Nest.
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This project serves as an example for setting up a cursor based pagination pattern. The cursor is a JSON payload encoded in base64 that can be decoded by end clients. If a cursor is not present, the api will automatically generate a cursor and redirect the user to the start of the traversal path. From there each subsequent request for the resource collection will provide a corresponding cursor.
+
+Cursor payload example:
+```
+{
+  "start": 0,
+  "count": 100,
+  "links": {
+    "next": "http://localhost:3000/api/v1/todo?cursor=eyJzdGFydCI6MTAwLCJjb3VudCI6MTAwLCJsaW5rcyI6eyJuZXh0IjpudWxsLCJwcmV2aW91cyI6bnVsbH19",
+    "previous": null
+  }
+}
+```
 
 ## Installation
 
 ```bash
-$ npm install
+$ yarn install
 ```
 
 ## Running the app
 
 ```bash
 # development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+$ yarn run start
 ```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
