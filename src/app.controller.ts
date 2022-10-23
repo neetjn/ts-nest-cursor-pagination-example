@@ -38,10 +38,11 @@ export class AppController {
     let { cursor } = query;
     if (!cursor) {
       cursor = generateCursor(TodoCollectionPath);
-      console.log(`\nCursor Generated: ${cursor}\n`)
       res.redirect(`${TodoCollectionPath}?cursor=${cursor}`);
       return;
     }
-    return this.appService.getTodoCollection(cursor);
+    const collection = this.appService.getTodoCollection(cursor);
+    res.status(200).send(collection);
+    return collection;
   }
 }
