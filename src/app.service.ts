@@ -1,6 +1,9 @@
+import { SliceArray } from 'slice';
 import { Injectable } from '@nestjs/common';
 import * as Constants from './constants';
-import * as Data from './data/todos.json';
+import * as SeedData from './data/todos.json';
+
+const Data = SliceArray(...SeedData);
 
 interface ICursorLinks {
   next: string;
@@ -30,9 +33,10 @@ export interface ITodoCollection {
   items: Array<ITodo>;
   total: number;
   count: number;
+  next: string;
 }
 
-const defaultCursorRequest = {
+export const defaultCursorRequest = {
   count: Constants.DEFAULT_PAGE_SIZE,
   start: 0,
 };
@@ -44,29 +48,26 @@ export const deserializeCursor = (parameters: string): ICursor => {
 
 const serializeCursor = (cursor: ICursor) => new Buffer(JSON.stringify(cursor), 'utf8').toString('base64');
 
-// TODO: memoize this
-export const generateCursor = (resourceUri: string, request: ICursorRequest = defaultCursorRequest): string => {
-  console.log(`\nCreating Cursor... Resource=${resourceUri}\n`)
+export const generateCursor = (request: ICursorRequest = defaultCursorRequest, resourceUri: string = null): string => {
   const { start, count, total } = request;
 
-  const isNext = total - (start + count);
-  const isPrevious = !!start;
+  const isNext = !!resourceUri && !!(total - (start + count));
+  const isPrevious = !!resourceUri && !!start;
 
   const nextPage = isNext ? start + count : null;
   const previousPage = isPrevious ? start - count : null;
 
-  const next = nextPage ? `${resourceUri}?cursor=${generateCursor(
-    resourceUri, {
-      ...defaultCursorRequest,
-      start: nextPage,
-    }
-  )}` : null;
-  const previous = previousPage ? `${resourceUri}?cursor=${generateCursor(
-    resourceUri, {
-      ...defaultCursorRequest,
-      start: previousPage,
-    }
-  )}` : null;
+  const next = nextPage ? `${resourceUri}?cursor=${generateCursor({
+    ...defaultCursorRequest,
+    start: nextPage,
+    total,
+  })}` : null;
+
+  const previous = previousPage ? `${resourceUri}?cursor=${generateCursor({
+    ...defaultCursorRequest,
+    start: previousPage,
+    total,
+  })}` : null;
 
   const cursor: ICursor = {
     start,
@@ -82,18 +83,27 @@ export const generateCursor = (resourceUri: string, request: ICursorRequest = de
 
 @Injectable()
 export class AppService {
+  getTodoSize(): number {
+    return Data.length;
+  }
   getTodo(id: string): ITodo {
     return Data.find(({ id: identifier }) => identifier === id)
   }
   getTodoCollection(cursorStr: string): ITodoCollection {
     const cursor: ICursor = deserializeCursor(cursorStr);
     const { start, count } = cursor;
-    const items = Data.slice(start, count);
     const total = Data.length;
+    const items = Data.slice(start, start + count);
+    const next = generateCursor({
+      start: start + count,
+      count,
+      total,
+    });
     const collection: ITodoCollection = {
       items,
       total,
       count,
+      next,
     }
     return collection;
   }

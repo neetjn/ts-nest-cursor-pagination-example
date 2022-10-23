@@ -12,6 +12,7 @@ import {
   ITodo,
   ITodoCollection,
   generateCursor,
+  defaultCursorRequest,
 } from './app.service';
 import { API_ROOT } from './constants';
 
@@ -37,7 +38,11 @@ export class AppController {
   getTodoCollection(@Query() query, @Res() res): ITodoCollection {
     let { cursor } = query;
     if (!cursor) {
-      cursor = generateCursor(TodoCollectionPath);
+      const total = this.appService.getTodoSize();
+      cursor = generateCursor({
+        ...defaultCursorRequest,
+        total,
+      }, TodoCollectionPath);
       res.redirect(`${TodoCollectionPath}?cursor=${cursor}`);
       return;
     }
