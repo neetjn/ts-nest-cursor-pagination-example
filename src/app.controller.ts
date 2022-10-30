@@ -21,7 +21,6 @@ export const Routes = {
   TodoCollection: '/api/v1/todo',
 };
 
-
 const TodoCollectionPath = `${API_ROOT}${Routes.TodoCollection}`;
 
 @Controller()
